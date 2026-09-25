@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Days of the week and colors and numbers quiz</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div class="wrap">
+<h1>Days of the week and colors and numbers quiz</h1>
+<p class="subject">Spanish</p>
+<p class="notes">Simple listening practice in class - test your understanding!</p>
+<div class="toprow">
+<label class="toggle"><input type="checkbox" id="scrambleQuestions"> Scramble question order</label>
+</div>
+<div class="card" id="quizCard">
+<form id="quizForm"></form>
+<div class="btn-row"><button class="btn-primary" id="submitBtn">Submit</button></div>
+</div>
+<div class="card timer-panel" id="timerPanel" hidden>
+<p>Calculating your results in</p>
+<p class="timer-count" id="countdown">2:00</p>
+</div>
+<div class="card" id="resultsPanel" hidden>
+<p class="score-line" id="scoreLine"></p>
+<div class="btn-row">
+<button class="btn-primary" id="tryAgainBtn">Try again</button>
+<button class="btn-quiet" id="clearHistoryBtn">Clear history</button>
+</div>
+<div id="historyWrap" style="margin-top:16px;"></div>
+</div>
+</div>
+<script>
+var QUIZ_META = {"slug":"days-of-the-week-and-colors-and-numbers-quiz","quizName":"Days of the week and colors and numbers quiz","subject":"Spanish","notes":"Simple listening practice in class - test your understanding!"};
+var QUIZ_DATA = [{"scramble":false,"question":"Day of the week said?","answer":"Monday","choices":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},{"scramble":false,"question":"Day of the week said?","answer":"Wednesday","choices":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},{"scramble":false,"question":"Day of the week said?","answer":"Sunday","choices":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},{"scramble":false,"question":"Day of the week said?","answer":"Friday","choices":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},{"scramble":false,"question":"Day of the week said?","answer":"Tuesday","choices":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},{"scramble":false,"question":"Day of the week said?","answer":"Saturday","choices":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},{"scramble":false,"question":"Day of the week said?","answer":"Thursday","choices":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]},{"scramble":false,"question":"Colors?","answer":"Green","choices":["Green","Blue","Yellow","Orange","Red","Black","White"]},{"scramble":false,"question":"Colors?","answer":"Blue","choices":["Green","Blue","Yellow","Orange","Red","Black","White"]},{"scramble":false,"question":"Colors?","answer":"White","choices":["Green","Blue","Yellow","Orange","Red","Black","White"]},{"scramble":false,"question":"Colors?","answer":"Red","choices":["Green","Blue","Yellow","Orange","Red","Black","White"]},{"scramble":false,"question":"Colors?","answer":"Orange","choices":["Green","Blue","Yellow","Orange","Red","Black","White"]},{"scramble":false,"question":"Colors?","answer":"Black","choices":["Green","Blue","Yellow","Orange","Red","Black","White"]},{"scramble":false,"question":"Colors?","answer":"Yellow","choices":["Green","Blue","Yellow","Orange","Red","Black","White"]},{"scramble":false,"question":"Number?","answer":"15","choices":[]},{"scramble":false,"question":"Number?","answer":"17","choices":[]},{"scramble":false,"question":"Number?","answer":"20","choices":[]},{"scramble":false,"question":"Number?","answer":"4","choices":[]},{"scramble":false,"question":"Number?","answer":"2","choices":[]},{"scramble":true,"question":"What is the best way to learn a language?","answer":"Practice every day","choices":["Practice every day","Not try","Sleep with a book under your pillow"]}];
+var state = { order: [], submitted: false };
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function buildOrder(){var idx=QUIZ_DATA.map(function(q,i){return i;});var on=document.getElementById("scrambleQuestions").checked;return on?shuffle(idx):idx;}
+function render(){state.order=buildOrder();var form=document.getElementById("quizForm");form.innerHTML="";state.order.forEach(function(qi,n){var q=QUIZ_DATA[qi];var block=document.createElement("div");block.className="question";block.dataset.qi=qi;var qt=document.createElement("p");qt.className="qtext";qt.textContent=(n+1)+". "+q.question;block.appendChild(qt);if(q.choices&&q.choices.length){var list=document.createElement("div");list.className="choice-list";var choices=q.scramble?shuffle(q.choices):q.choices.slice();choices.forEach(function(c){var label=document.createElement("label");label.className="choice";var input=document.createElement("input");input.type="radio";input.name="q"+qi;input.value=c;label.appendChild(input);var span=document.createElement("span");span.textContent=c;label.appendChild(span);list.appendChild(label);});block.appendChild(list);}else{var inp=document.createElement("input");inp.type="text";inp.className="text-input";inp.name="q"+qi;inp.placeholder="Type your answer";block.appendChild(inp);}form.appendChild(block);});}
+function grade(){var correct=0;state.order.forEach(function(qi){var q=QUIZ_DATA[qi];var block=document.querySelector('.question[data-qi="'+qi+'"]');var isRight=false;if(q.choices&&q.choices.length){var checked=block.querySelector('input[type="radio"]:checked');var val=checked?checked.value:"";isRight=val.trim().toLowerCase()===q.answer.trim().toLowerCase();block.querySelectorAll(".choice").forEach(function(lbl){var inp=lbl.querySelector("input");inp.disabled=true;if(inp.value.trim().toLowerCase()===q.answer.trim().toLowerCase()){lbl.classList.add("correct");}else if(inp.checked){lbl.classList.add("wrong");}});}else{var field=block.querySelector(".text-input");var v=field.value||"";isRight=v.trim().toLowerCase()===q.answer.trim().toLowerCase();field.disabled=true;field.classList.add(isRight?"correct":"wrong");var note=document.createElement("p");note.className="answer-note";note.textContent="Correct answer: "+q.answer;field.insertAdjacentElement("afterend",note);}if(isRight)correct++;});return{correct:correct,total:state.order.length};}
+function fmtTime(s){var m=Math.floor(s/60);var sec=s%60;return m+":"+(sec<10?"0":"")+sec;}
+function startTimerThenReveal(result){var timerPanel=document.getElementById("timerPanel");timerPanel.hidden=false;var seconds=120;var countEl=document.getElementById("countdown");countEl.textContent=fmtTime(seconds);var iv=setInterval(function(){seconds--;countEl.textContent=fmtTime(seconds);if(seconds<=0){clearInterval(iv);timerPanel.hidden=true;reveal(result);}},1000);}
+function historyKey(){return "quizHistory_"+QUIZ_META.slug;}
+function loadHistory(){try{return JSON.parse(localStorage.getItem(historyKey())||"[]");}catch(e){return [];}}
+function saveAttempt(result){var hist=loadHistory();hist.push({date:new Date().toLocaleString(),score:result.correct,total:result.total});localStorage.setItem(historyKey(),JSON.stringify(hist));return hist;}
+function renderHistory(hist){var wrap=document.getElementById("historyWrap");if(!hist.length){wrap.innerHTML='<p class="answer-note">No previous attempts yet.</p>';return;}var rows=hist.slice().reverse().map(function(h){return "<tr><td>"+h.date+"</td><td>"+h.score+" / "+h.total+"</td></tr>";}).join("");wrap.innerHTML='<table class="history"><thead><tr><th>When</th><th>Score</th></tr></thead><tbody>'+rows+"</tbody></table>";}
+function reveal(result){var hist=saveAttempt(result);var panel=document.getElementById("resultsPanel");panel.hidden=false;var pct=Math.round((result.correct/result.total)*100);var line=document.getElementById("scoreLine");line.textContent="Score: "+result.correct+" / "+result.total+" ("+pct+"%)";line.className="score-line "+(pct>=70?"pass":"fail");renderHistory(hist);}
+document.getElementById("submitBtn").addEventListener("click",function(e){e.preventDefault();if(state.submitted)return;state.submitted=true;document.getElementById("submitBtn").disabled=true;var result=grade();startTimerThenReveal(result);});
+document.getElementById("tryAgainBtn").addEventListener("click",function(){state.submitted=false;document.getElementById("submitBtn").disabled=false;document.getElementById("resultsPanel").hidden=true;render();});
+document.getElementById("clearHistoryBtn").addEventListener("click",function(){if(confirm("Clear all saved history for this quiz? This cannot be undone.")){localStorage.removeItem(historyKey());renderHistory([]);}});
+render();renderHistory(loadHistory());
+</script>
+</body>
+</html>
