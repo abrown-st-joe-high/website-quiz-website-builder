@@ -10,10 +10,10 @@
 <div class="wrap">
 
   <h1>Quiz Page Generator</h1>
-  <p class="notes">Paste a spreadsheet of questions below and generate a single, self-contained quiz page. Download it, drop it in this repo next to <code>styles.css</code>, and share the link.</p>
+  <p class="notes">Paste a spreadsheet of questions below and generate a single, self-contained quiz page. Copy the path and code straight into GitHub, or download the file.</p>
 
   <div class="card">
-    <label class="field-label" for="csvInput">1. Paste your data (copied straight from Google Sheets or Excel)</label>
+    <label class="field-label" style="margin-top:0;" for="csvInput">1. Paste your data</label>
     <textarea id="csvInput" class="paste-in" placeholder="Paste tab- or comma-separated rows here..."></textarea>
 
     <label class="field-label">2. Which format is this?</label>
@@ -22,6 +22,26 @@
       <label><input type="radio" name="mode" value="full"> Full sheet (includes Subject, Quiz Name, Notes)</label>
     </div>
 
+    <div class="two-col">
+      <div>
+        <label class="field-label" for="folderInput">3. Subject folder</label>
+        <input type="text" id="folderInput" class="plain-input" placeholder="e.g. Spanish Quizzes, Trial Quizzes">
+        <p class="hint">Groups related quizzes into one folder. Use "Trial Quizzes" while testing.</p>
+      </div>
+      <div>
+        <label class="field-label" for="nameInput">4. Quiz name</label>
+        <input type="text" id="nameInput" class="plain-input" placeholder="e.g. Unit 3 Vocabulary">
+        <p class="hint">Leave blank to use the Quiz Name from a full-format sheet.</p>
+      </div>
+    </div>
+
+    <label class="field-label" for="baseUrlInput">5. Your GitHub Pages address (optional, remembered on this device)</label>
+    <input type="text" id="baseUrlInput" class="plain-input" placeholder="https://username.github.io/reponame">
+
+    <label class="toggle" style="margin-top:18px;">
+      <input type="checkbox" id="scrambleOrderInput"> Scramble question order for every student
+    </label>
+
     <div class="btn-row" style="margin-top:20px;">
       <button class="btn-primary" id="generateBtn">Generate quiz page</button>
     </div>
@@ -29,14 +49,45 @@
   </div>
 
   <div class="card" id="outputCard" hidden>
-    <label class="field-label" style="margin-top:0;">3. Your quiz page is ready</label>
-    <p class="notes" style="margin-bottom:12px;">Suggested filename: <code id="filenameOut"></code></p>
+    <label class="field-label" style="margin-top:0;">Your quiz page is ready</label>
+
+    <label class="field-label">File path (paste this into GitHub's "Create new file" name box — it will make the folder for you)</label>
+    <div class="copy-row">
+      <input type="text" id="pathOut" readonly>
+      <button class="btn-secondary" id="copyPathBtn">Copy path</button>
+    </div>
+
+    <label class="field-label">Shareable link (for your LMS, email, etc.)</label>
+    <div class="copy-row">
+      <input type="text" id="linkOut" readonly>
+      <button class="btn-secondary" id="copyLinkBtn">Copy link</button>
+    </div>
+
+    <label class="field-label">Code</label>
     <div class="btn-row" style="margin-bottom:14px;">
       <button class="btn-primary" id="downloadBtn">Download HTML file</button>
       <button class="btn-secondary" id="copyBtn">Copy code</button>
       <button class="btn-secondary" id="previewBtn">Preview in new tab</button>
+      <button class="btn-secondary" id="previewPerfectBtn">Preview perfect quiz</button>
+      <button class="btn-secondary" id="previewRandomBtn">Preview random answered quiz</button>
     </div>
     <textarea id="codeOut" class="code-out" readonly></textarea>
+  </div>
+
+  <div class="card" id="catalogCard" hidden>
+    <label class="field-label" style="margin-top:0;">Recently generated on this device</label>
+    <div id="catalogWrap"></div>
+  </div>
+
+  <div class="card">
+    <label class="field-label" style="margin-top:0;">Keeping quizzes organized</label>
+    <p class="notes" style="margin-bottom:8px;">A folder-per-subject scheme keeps this manageable as the number of quizzes grows:</p>
+    <ol class="steps">
+      <li>One folder per class or subject: <code>spanish-quizzes/</code>, <code>cs-foundations-quizzes/</code>.</li>
+      <li>A separate <code>trial-quizzes/</code> folder for anything you're still testing — safe to delete without touching real quizzes.</li>
+      <li>Inside a folder, name quizzes by unit or topic so they sort in order: <code>unit-3-vocabulary.html</code>, <code>unit-4-vocabulary.html</code>.</li>
+      <li>The "Recently generated" list above tracks the path and link for everything you've made here, so you don't have to hunt through GitHub to re-copy a link.</li>
+    </ol>
   </div>
 
   <div class="card">
@@ -44,15 +95,15 @@
     <ol class="steps">
       <li>Create (or open) a GitHub repo and turn on Pages for it (Settings &rarr; Pages &rarr; Deploy from branch).</li>
       <li>Upload <code>styles.css</code> to the repo root once &mdash; every quiz page you generate here shares it.</li>
-      <li>Download a quiz page above and upload the file to the same repo.</li>
-      <li>Open <code>https://yourusername.github.io/yourrepo/filename.html</code> and share that link with students.</li>
+      <li>In the repo, click <strong>Add file &rarr; Create new file</strong>, paste the copied path (e.g. <code>trial-quizzes/unit-3-vocabulary.html</code>) into the name box, then paste the copied code into the editor and commit.</li>
+      <li>Share the copied link with students.</li>
     </ol>
   </div>
 
   <div class="card">
     <label class="field-label" style="margin-top:0;">Expected columns</label>
     <p class="notes" style="margin-bottom:0;">
-      Column A: <code>Scramble choices?</code> (TRUE/FALSE) &middot;
+      Column A: <code>Scramble choices?</code> (TRUE/FALSE, scrambles that question's answer choices) &middot;
       Column B: <code>Question</code> &middot;
       Column C: <code>Answer</code> &middot;
       Columns D+: <code>Choices</code> (leave blank for a typed-answer question).
@@ -75,14 +126,14 @@ function parseSheet(raw, mode) {
   var rows = lines.map(function(l) { return l.split(delim); });
   var header = rows[0];
 
-  var meta = { subject: '', quizName: 'Untitled Quiz', notes: '' };
+  var meta = { subject: '', quizName: '', notes: '' };
   if (mode === 'full') {
     for (var i = 4; i < header.length; i += 2) {
       var label = (header[i] || '').trim().toLowerCase();
       var value = (header[i + 1] || '').trim();
       if (!label) continue;
       if (label.indexOf('subject') !== -1) meta.subject = value;
-      else if (label.indexOf('quiz name') !== -1) meta.quizName = value || meta.quizName;
+      else if (label.indexOf('quiz name') !== -1) meta.quizName = value;
       else if (label.indexOf('note') !== -1) meta.notes = value;
     }
   }
@@ -101,16 +152,17 @@ function parseSheet(raw, mode) {
 }
 
 function slugify(s) {
-  return (s || 'quiz').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'quiz';
+  return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
 function escForScript(jsonStr) {
   return jsonStr.replace(/<\/script/gi, '<\\/script');
 }
 
-function buildQuizHTML(meta, questions) {
-  var slug = slugify(meta.quizName);
-  var metaJson = escForScript(JSON.stringify({ slug: slug, quizName: meta.quizName, subject: meta.subject, notes: meta.notes }));
+function buildQuizHTML(meta, questions, scrambleOrder) {
+  var metaJson = escForScript(JSON.stringify({
+    slug: meta.slug, quizName: meta.quizName, subject: meta.subject, notes: meta.notes, scrambleOrder: !!scrambleOrder
+  }));
   var dataJson = escForScript(JSON.stringify(questions));
 
   var lines = [];
@@ -120,16 +172,13 @@ function buildQuizHTML(meta, questions) {
   lines.push('<meta charset="UTF-8">');
   lines.push('<meta name="viewport" content="width=device-width, initial-scale=1">');
   lines.push('<title>' + (meta.quizName || 'Quiz') + '</title>');
-  lines.push('<link rel="stylesheet" href="./styles.css">');
+  lines.push('<link rel="stylesheet" href="../styles.css">');
   lines.push('</head>');
   lines.push('<body>');
   lines.push('<div class="wrap">');
   lines.push('<h1>' + (meta.quizName || 'Quiz') + '</h1>');
   if (meta.subject) lines.push('<p class="subject">' + meta.subject + '</p>');
   if (meta.notes) lines.push('<p class="notes">' + meta.notes + '</p>');
-  lines.push('<div class="toprow">');
-  lines.push('<label class="toggle"><input type="checkbox" id="scrambleQuestions"> Scramble question order</label>');
-  lines.push('</div>');
   lines.push('<div class="card" id="quizCard">');
   lines.push('<form id="quizForm"></form>');
   lines.push('<div class="btn-row"><button class="btn-primary" id="submitBtn">Submit</button></div>');
@@ -152,11 +201,11 @@ function buildQuizHTML(meta, questions) {
   lines.push('var QUIZ_DATA = ' + dataJson + ';');
   lines.push('var state = { order: [], submitted: false };');
   lines.push('function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}');
-  lines.push('function buildOrder(){var idx=QUIZ_DATA.map(function(q,i){return i;});var on=document.getElementById("scrambleQuestions").checked;return on?shuffle(idx):idx;}');
+  lines.push('function buildOrder(){var idx=QUIZ_DATA.map(function(q,i){return i;});return QUIZ_META.scrambleOrder?shuffle(idx):idx;}');
   lines.push('function render(){state.order=buildOrder();var form=document.getElementById("quizForm");form.innerHTML="";state.order.forEach(function(qi,n){var q=QUIZ_DATA[qi];var block=document.createElement("div");block.className="question";block.dataset.qi=qi;var qt=document.createElement("p");qt.className="qtext";qt.textContent=(n+1)+". "+q.question;block.appendChild(qt);if(q.choices&&q.choices.length){var list=document.createElement("div");list.className="choice-list";var choices=q.scramble?shuffle(q.choices):q.choices.slice();choices.forEach(function(c){var label=document.createElement("label");label.className="choice";var input=document.createElement("input");input.type="radio";input.name="q"+qi;input.value=c;label.appendChild(input);var span=document.createElement("span");span.textContent=c;label.appendChild(span);list.appendChild(label);});block.appendChild(list);}else{var inp=document.createElement("input");inp.type="text";inp.className="text-input";inp.name="q"+qi;inp.placeholder="Type your answer";block.appendChild(inp);}form.appendChild(block);});}');
   lines.push('function grade(){var correct=0;state.order.forEach(function(qi){var q=QUIZ_DATA[qi];var block=document.querySelector(\'.question[data-qi="\'+qi+\'"]\');var isRight=false;if(q.choices&&q.choices.length){var checked=block.querySelector(\'input[type="radio"]:checked\');var val=checked?checked.value:"";isRight=val.trim().toLowerCase()===q.answer.trim().toLowerCase();block.querySelectorAll(".choice").forEach(function(lbl){var inp=lbl.querySelector("input");inp.disabled=true;if(inp.value.trim().toLowerCase()===q.answer.trim().toLowerCase()){lbl.classList.add("correct");}else if(inp.checked){lbl.classList.add("wrong");}});}else{var field=block.querySelector(".text-input");var v=field.value||"";isRight=v.trim().toLowerCase()===q.answer.trim().toLowerCase();field.disabled=true;field.classList.add(isRight?"correct":"wrong");var note=document.createElement("p");note.className="answer-note";note.textContent="Correct answer: "+q.answer;field.insertAdjacentElement("afterend",note);}if(isRight)correct++;});return{correct:correct,total:state.order.length};}');
   lines.push('function fmtTime(s){var m=Math.floor(s/60);var sec=s%60;return m+":"+(sec<10?"0":"")+sec;}');
-  lines.push('function startTimerThenReveal(result){var timerPanel=document.getElementById("timerPanel");timerPanel.hidden=false;var seconds=120;var countEl=document.getElementById("countdown");countEl.textContent=fmtTime(seconds);var iv=setInterval(function(){seconds--;countEl.textContent=fmtTime(seconds);if(seconds<=0){clearInterval(iv);timerPanel.hidden=true;reveal(result);}},1000);}');
+  lines.push('function startTimerThenReveal(result){var timerPanel=document.getElementById("timerPanel");timerPanel.hidden=false;var seconds=window.__QUIZ_DEBUG_SECONDS__||120;var countEl=document.getElementById("countdown");countEl.textContent=fmtTime(seconds);var iv=setInterval(function(){seconds--;countEl.textContent=fmtTime(seconds);if(seconds<=0){clearInterval(iv);timerPanel.hidden=true;reveal(result);}},1000);}');
   lines.push('function historyKey(){return "quizHistory_"+QUIZ_META.slug;}');
   lines.push('function loadHistory(){try{return JSON.parse(localStorage.getItem(historyKey())||"[]");}catch(e){return [];}}');
   lines.push('function saveAttempt(result){var hist=loadHistory();hist.push({date:new Date().toLocaleString(),score:result.correct,total:result.total});localStorage.setItem(historyKey(),JSON.stringify(hist));return hist;}');
@@ -169,10 +218,65 @@ function buildQuizHTML(meta, questions) {
   lines.push('<' + '/script>');
   lines.push('</body>');
   lines.push('</html>');
-  return { html: lines.join('\n'), filename: slug + '.html' };
+  return lines.join('\n');
 }
 
-var lastResult = null;
+// Builds a debug copy: auto-fills every answer (correct or random) and skips the wait timer.
+// Never used for the downloaded/shared file — preview only.
+function buildDebugHTML(html, mode) {
+  var debugScript = [
+    '<script>',
+    'window.__QUIZ_DEBUG_SECONDS__ = 2;',
+    'window.addEventListener("load", function() {',
+    '  document.querySelectorAll(".question").forEach(function(block) {',
+    '    var qi = block.dataset.qi;',
+    '    var q = QUIZ_DATA[qi];',
+    '    if (q.choices && q.choices.length) {',
+    '      var radios = block.querySelectorAll("input[type=radio]");',
+    '      var targetVal;',
+    '      if ("' + mode + '" === "perfect") { targetVal = q.answer; }',
+    '      else { targetVal = radios[Math.floor(Math.random() * radios.length)].value; }',
+    '      radios.forEach(function(r) { if (r.value.trim().toLowerCase() === targetVal.trim().toLowerCase()) r.checked = true; });',
+    '    } else {',
+    '      var field = block.querySelector(".text-input");',
+    '      field.value = "' + mode + '" === "perfect" ? q.answer : ("random " + Math.random().toString(36).slice(2, 7));',
+    '    }',
+    '  });',
+    '  document.getElementById("submitBtn").click();',
+    '});',
+    '<' + '/script>'
+  ].join('\n');
+  return html.replace('</body>', debugScript + '\n</body>');
+}
+
+var lastResult = null; // { html, path, link, filename }
+
+function loadCatalog() {
+  try { return JSON.parse(localStorage.getItem('quizGenCatalog') || '[]'); } catch (e) { return []; }
+}
+
+function renderCatalog() {
+  var cat = loadCatalog();
+  var card = document.getElementById('catalogCard');
+  if (!cat.length) { card.hidden = true; return; }
+  card.hidden = false;
+  var rows = cat.slice().reverse().slice(0, 15).map(function(c) {
+    return '<tr><td>' + c.date + '</td><td>' + c.name + '</td><td><code>' + c.path + '</code></td></tr>';
+  }).join('');
+  document.getElementById('catalogWrap').innerHTML =
+    '<table class="history"><thead><tr><th>When</th><th>Quiz</th><th>Path</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+function addToCatalog(entry) {
+  var cat = loadCatalog();
+  cat.push(entry);
+  localStorage.setItem('quizGenCatalog', JSON.stringify(cat));
+  renderCatalog();
+}
+
+// Remember the base URL on this device.
+var savedBaseUrl = localStorage.getItem('quizGenBaseUrl');
+if (savedBaseUrl) document.getElementById('baseUrlInput').value = savedBaseUrl;
 
 document.getElementById('generateBtn').addEventListener('click', function() {
   var statusEl = document.getElementById('statusMsg');
@@ -182,17 +286,56 @@ document.getElementById('generateBtn').addEventListener('click', function() {
     var raw = document.getElementById('csvInput').value;
     var mode = document.querySelector('input[name="mode"]:checked').value;
     var parsed = parseSheet(raw, mode);
-    lastResult = buildQuizHTML(parsed.meta, parsed.questions);
-    document.getElementById('codeOut').value = lastResult.html;
-    document.getElementById('filenameOut').textContent = lastResult.filename;
+
+    var folderRaw = document.getElementById('folderInput').value.trim();
+    var nameRaw = document.getElementById('nameInput').value.trim() || parsed.meta.quizName;
+    if (!folderRaw) throw new Error('Enter a subject folder (e.g. "Trial Quizzes").');
+    if (!nameRaw) throw new Error('Enter a quiz name, or include one in a full-format sheet.');
+
+    var folderSlug = slugify(folderRaw);
+    var nameSlug = slugify(nameRaw);
+    var path = folderSlug + '/' + nameSlug + '.html';
+
+    var baseUrl = document.getElementById('baseUrlInput').value.trim().replace(/\/+$/, '');
+    if (baseUrl) localStorage.setItem('quizGenBaseUrl', baseUrl);
+    var link = baseUrl ? (baseUrl + '/' + path) : '';
+
+    var scrambleOrder = document.getElementById('scrambleOrderInput').checked;
+    var meta = { slug: folderSlug + '-' + nameSlug, quizName: nameRaw, subject: parsed.meta.subject, notes: parsed.meta.notes };
+    var html = buildQuizHTML(meta, parsed.questions, scrambleOrder);
+
+    lastResult = { html: html, path: path, link: link, filename: nameSlug + '.html' };
+
+    document.getElementById('codeOut').value = html;
+    document.getElementById('pathOut').value = path;
+    document.getElementById('linkOut').value = link || '(enter your GitHub Pages address above to build a link)';
     document.getElementById('outputCard').hidden = false;
     statusEl.textContent = 'Generated ' + parsed.questions.length + ' question(s).';
     statusEl.classList.add('ok');
+
+    addToCatalog({ date: new Date().toLocaleString(), name: nameRaw, path: path, link: link });
   } catch (err) {
     statusEl.textContent = err.message;
     statusEl.classList.add('error');
     document.getElementById('outputCard').hidden = true;
   }
+});
+
+function copyText(text, statusEl) {
+  navigator.clipboard.writeText(text).then(function() {
+    statusEl.textContent = 'Copied.';
+    statusEl.className = 'status-msg ok';
+  });
+}
+
+document.getElementById('copyPathBtn').addEventListener('click', function() {
+  if (!lastResult) return;
+  copyText(lastResult.path, document.getElementById('statusMsg'));
+});
+
+document.getElementById('copyLinkBtn').addEventListener('click', function() {
+  if (!lastResult || !lastResult.link) return;
+  copyText(lastResult.link, document.getElementById('statusMsg'));
 });
 
 document.getElementById('downloadBtn').addEventListener('click', function() {
@@ -210,19 +353,31 @@ document.getElementById('downloadBtn').addEventListener('click', function() {
 
 document.getElementById('copyBtn').addEventListener('click', function() {
   if (!lastResult) return;
-  navigator.clipboard.writeText(lastResult.html).then(function() {
-    var statusEl = document.getElementById('statusMsg');
-    statusEl.textContent = 'Code copied to clipboard.';
-    statusEl.className = 'status-msg ok';
-  });
+  copyText(lastResult.html, document.getElementById('statusMsg'));
 });
+
+function openBlob(html) {
+  var blob = new Blob([html], { type: 'text/html' });
+  var url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+}
 
 document.getElementById('previewBtn').addEventListener('click', function() {
   if (!lastResult) return;
-  var blob = new Blob([lastResult.html], { type: 'text/html' });
-  var url = URL.createObjectURL(blob);
-  window.open(url, '_blank');
+  openBlob(lastResult.html);
 });
+
+document.getElementById('previewPerfectBtn').addEventListener('click', function() {
+  if (!lastResult) return;
+  openBlob(buildDebugHTML(lastResult.html, 'perfect'));
+});
+
+document.getElementById('previewRandomBtn').addEventListener('click', function() {
+  if (!lastResult) return;
+  openBlob(buildDebugHTML(lastResult.html, 'random'));
+});
+
+renderCatalog();
 </script>
 </body>
 </html>
