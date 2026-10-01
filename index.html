@@ -13,7 +13,7 @@
   <p class="notes">Paste a spreadsheet of questions below and generate a single, self-contained quiz page. Copy the path and code straight into GitHub, or download the file.</p>
 
   <div class="card">
-    <label class="field-label" style="margin-top:0;" for="csvInput">1. Paste your data</label>
+    <label class="field-label" style="margin-top:0;" for="csvInput">1. Paste data</label>
     <textarea id="csvInput" class="paste-in" placeholder="Paste tab- or comma-separated rows here..."></textarea>
 
     <label class="field-label">2. Which format is this?</label>
@@ -35,7 +35,10 @@
       </div>
     </div>
 
-    <label class="field-label">5. Site and repo links (optional, remembered on this device)</label>
+    <label class="field-label" for="instructionsInput">5. Instructions shown at the top of the quiz (optional)</label>
+    <textarea id="instructionsInput" class="plain-input" style="min-height:70px;" placeholder="e.g. Listen to each clip once, then choose the best answer."></textarea>
+
+    <label class="field-label">6. Site and repo links (optional, remembered on this device)</label>
     <div class="two-col">
       <div>
         <label class="field-label" style="margin-top:0;" for="baseUrlInput">GitHub Pages site</label>
@@ -63,58 +66,51 @@
     <p id="statusMsg" class="status-msg"></p>
   </div>
 
-  <div class="card">
-    <label class="field-label" style="margin-top:0;">6. Live results (optional)</label>
-    <p class="hint" style="margin-bottom:10px;">Collects a class code, a student code, and each score so a separate dashboard page can show them as they come in. Leave set to Off for local-only history.</p>
-    <select id="liveBackendSelect" class="plain-input">
-      <option value="none">Off — local history only</option>
-      <option value="sheets">Google Sheets</option>
-      <option value="firebase">Firebase Realtime Database</option>
-    </select>
-
-    <div id="sheetsSettings" hidden style="margin-top:16px;">
-      <label class="field-label" style="margin-top:0;" for="sheetsUrlInput">Apps Script Web App URL</label>
-      <input type="text" id="sheetsUrlInput" class="plain-input" placeholder="https://script.google.com/macros/s/.../exec">
-      <div class="btn-row" style="margin-top:10px;">
-        <button class="btn-secondary" id="copyAppsScriptBtn" type="button">Copy Apps Script code</button>
-      </div>
-      <p class="hint">In a Google Sheet: Extensions &rarr; Apps Script, paste the copied code, Deploy &rarr; New deployment &rarr; Web app (execute as Me, access Anyone). Paste the resulting Web App URL above. To read results on the dashboard, use File &rarr; Share &rarr; Publish to web on the same sheet, choose CSV, and use that link there.</p>
-    </div>
-
-    <div id="firebaseSettings" hidden style="margin-top:16px;">
-      <label class="field-label" style="margin-top:0;" for="firebaseUrlInput">Firebase Realtime Database URL</label>
-      <input type="text" id="firebaseUrlInput" class="plain-input" placeholder="https://project-id-default-rtdb.firebaseio.com">
-      <div class="btn-row" style="margin-top:10px;">
-        <button class="btn-secondary" id="copyRulesBtn" type="button">Copy database rules</button>
-      </div>
-      <p class="hint">Create a free Firebase project, enable Realtime Database, paste the copied rules into the Rules tab and publish. Paste the database URL above. Open rules make results world-readable/writable — fine for low-stakes classroom use, but anyone with the URL could see or add entries.</p>
-    </div>
-  </div>
-
   <div class="card" id="outputCard" hidden>
-    <label class="field-label" style="margin-top:0;">Your quiz page is ready</label>
+    <label class="field-label" style="margin-top:0;">Your quiz page is ready — <span id="versionOut"></span></label>
+    <p id="versionHint" class="hint" style="margin-bottom:14px;"></p>
 
-    <label class="field-label">File path (paste this into GitHub's "Create new file" name box — it will make the folder for you)</label>
+    <label class="field-label" style="margin-top:0;">File path</label>
     <div class="copy-row">
       <input type="text" id="pathOut" readonly>
-      <button class="btn-secondary" id="copyPathBtn">Copy path</button>
+      <button class="btn-secondary" id="copyPathBtn" type="button">Copy path</button>
     </div>
 
-    <label class="field-label">Shareable link (for your LMS, email, etc.)</label>
+    <label class="field-label">Shareable link</label>
     <div class="copy-row">
       <input type="text" id="linkOut" readonly>
-      <button class="btn-secondary" id="copyLinkBtn">Copy link</button>
+      <button class="btn-secondary" id="copyLinkBtn" type="button">Copy link</button>
     </div>
 
     <label class="field-label">Code</label>
     <div class="btn-row" style="margin-bottom:14px;">
-      <button class="btn-primary" id="downloadBtn">Download HTML file</button>
-      <button class="btn-secondary" id="copyBtn">Copy code</button>
-      <button class="btn-secondary" id="previewBtn">Preview in new tab</button>
-      <button class="btn-secondary" id="previewPerfectBtn">Preview perfect quiz</button>
-      <button class="btn-secondary" id="previewRandomBtn">Preview random answered quiz</button>
+      <button class="btn-primary" id="downloadBtn" type="button">Download HTML file</button>
+      <button class="btn-secondary" id="copyBtn" type="button">Copy code</button>
+      <button class="btn-secondary" id="previewBtn" type="button">Preview in new tab</button>
+      <button class="btn-secondary" id="previewPerfectBtn" type="button">Preview perfect quiz</button>
+      <button class="btn-secondary" id="previewRandomBtn" type="button">Preview random answered quiz</button>
     </div>
     <textarea id="codeOut" class="code-out" readonly></textarea>
+  </div>
+
+  <div class="card" id="printableCard" hidden>
+    <label class="field-label" style="margin-top:0;">Printable version (PDF)</label>
+    <label class="field-label" style="margin-top:0;" for="choiceLayoutSelect">Multiple-choice layout</label>
+    <select id="choiceLayoutSelect" class="plain-input">
+      <option value="column">One choice per line</option>
+      <option value="grid">Grid, columns wide</option>
+    </select>
+    <div id="gridColsRow" hidden style="margin-top:10px;">
+      <label class="field-label" style="margin-top:0;" for="gridColsInput">Columns wide</label>
+      <input type="number" id="gridColsInput" class="plain-input" min="2" max="6" value="4" style="max-width:100px;">
+    </div>
+    <label class="toggle" style="margin-top:14px;">
+      <input type="checkbox" id="includeKeyInput"> Include answer key page
+    </label>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn-secondary" id="printableBtn" type="button">Open printable version</button>
+    </div>
+    <p class="hint">Opens in a new tab, formatted for paper. Use the page's own Print button (or Ctrl/Cmd+P) and choose "Save as PDF" as the destination.</p>
   </div>
 
   <div class="card" id="catalogCard" hidden>
@@ -123,13 +119,36 @@
   </div>
 
   <div class="card">
+    <label class="field-label" style="margin-top:0;">Live results via Google Form (optional)</label>
+    <label class="toggle" style="margin-bottom:14px;">
+      <input type="checkbox" id="liveEnabledInput"> Enable live results
+    </label>
+    <div id="formsSettings" hidden>
+      <label class="field-label" style="margin-top:0;" for="formsPrefillInput">Form pre-filled link</label>
+      <div class="copy-row">
+        <input type="text" id="formsPrefillInput" placeholder="https://docs.google.com/forms/d/e/.../viewform?...">
+        <button class="btn-secondary" id="parseFormsBtn" type="button">Parse link</button>
+      </div>
+      <p id="formsStatus" class="status-msg"></p>
+      <p class="hint">
+        Create a Google Form with five short-answer questions, in any order: Class Code, Student Name, Quiz Name, Score, Total.
+        Open the form, choose <strong>Get pre-filled link</strong> from the menu, then on the pre-filled version type exactly
+        <code>CLASSCODE</code>, <code>STUDENTNAME</code>, <code>QUIZNAME</code>, <code>SCORE</code>, <code>TOTAL</code>
+        (one word, capitals) into the matching questions, click <strong>Get Link</strong>, copy it, and paste it above.
+        In the Form's Responses tab, create the linked Sheet. In that Sheet: File &rarr; Share &rarr; Publish to web &rarr; CSV &mdash;
+        paste that link into <code>dashboard.html</code> to watch results live.
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
     <label class="field-label" style="margin-top:0;">Keeping quizzes organized</label>
-    <p class="notes" style="margin-bottom:8px;">A folder-per-subject scheme keeps this manageable as the number of quizzes grows:</p>
     <ol class="steps">
       <li>One folder per class or subject: <code>spanish-quizzes/</code>, <code>cs-foundations-quizzes/</code>.</li>
-      <li>A separate <code>trial-quizzes/</code> folder for anything you're still testing — safe to delete without touching real quizzes.</li>
-      <li>Inside a folder, name quizzes by unit or topic so they sort in order: <code>unit-3-vocabulary.html</code>, <code>unit-4-vocabulary.html</code>.</li>
-      <li>The "Recently generated" list above tracks the path and link for everything you've made here, so you don't have to hunt through GitHub to re-copy a link.</li>
+      <li>A separate <code>trial-quizzes/</code> folder for anything still being tested.</li>
+      <li>Name quizzes by unit or topic so they sort in order: <code>unit-3-vocabulary.html</code>, <code>unit-4-vocabulary.html</code>.</li>
+      <li>Regenerating the same folder + name bumps the version shown on the page and in the list above, so it's clear which copy is newest.</li>
+      <li>Use <strong>Load to edit</strong> in the list above to pull a past quiz back into the form to tweak and regenerate.</li>
     </ol>
   </div>
 
@@ -138,8 +157,9 @@
     <ol class="steps">
       <li>Create (or open) a GitHub repo and turn on Pages for it (Settings &rarr; Pages &rarr; Deploy from branch).</li>
       <li>Upload <code>index.html</code>, <code>styles.css</code>, and <code>dashboard.html</code> to the repo root once.</li>
-      <li>In the repo, click <strong>Add file &rarr; Create new file</strong>, paste the copied path (e.g. <code>trial-quizzes/unit-3-vocabulary.html</code>) into the name box, then paste the copied code into the editor and commit.</li>
-      <li>Share the copied link with students. To watch results live, open <code>dashboard.html</code> on the site, pick the same backend used above, and enter the same class code.</li>
+      <li>For a brand-new path: <strong>Add file &rarr; Create new file</strong>, paste the copied path into the name box, paste the code, commit.</li>
+      <li>For a path already in the repo (version 2 or later): open that file on GitHub, click the pencil (Edit), replace the contents with the copied code, commit.</li>
+      <li>Share the copied link. To watch results live, open <code>dashboard.html</code> on the site and paste the published Sheet CSV link and a class code.</li>
     </ol>
   </div>
 
@@ -157,6 +177,10 @@
 </div>
 
 <script>
+function escapeHtml(s) {
+  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function detectDelimiter(text) {
   var firstLine = text.split(/\r?\n/)[0] || '';
   return firstLine.indexOf('\t') !== -1 ? '\t' : ',';
@@ -202,11 +226,45 @@ function escForScript(jsonStr) {
   return jsonStr.replace(/<\/script/gi, '<\\/script');
 }
 
-function buildQuizHTML(meta, questions, scrambleOrder, live) {
-  live = live || { backend: 'none', sheetsUrl: '', firebaseUrl: '' };
+function parsePrefillUrl(url) {
+  var u;
+  try { u = new URL(url); } catch (e) { throw new Error('That does not look like a valid link.'); }
+  var mapping = {};
+  u.searchParams.forEach(function(value, key) {
+    if (key.indexOf('entry.') === 0) mapping[(value || '').trim().toUpperCase()] = key;
+  });
+  var required = ['CLASSCODE', 'STUDENTNAME', 'QUIZNAME', 'SCORE', 'TOTAL'];
+  var missing = required.filter(function(t) { return !mapping[t]; });
+  if (missing.length) throw new Error('Could not find entry IDs for: ' + missing.join(', ') + '. Fill each Form question with that exact placeholder before generating the pre-filled link.');
+  return {
+    actionUrl: u.origin + u.pathname.replace(/\/viewform$/, '/formResponse'),
+    classCodeEntry: mapping.CLASSCODE,
+    studentNameEntry: mapping.STUDENTNAME,
+    quizNameEntry: mapping.QUIZNAME,
+    scoreEntry: mapping.SCORE,
+    totalEntry: mapping.TOTAL
+  };
+}
+
+function buildQuizHTML(meta, questions, opts) {
+  opts = opts || {};
+  var scrambleOrder = !!opts.scrambleOrder;
+  var instructions = opts.instructions || '';
+  var live = opts.live || { enabled: false, formsConfig: null };
+  var version = opts.version || 1;
+  var generatedAt = opts.generatedAt || new Date().toLocaleString();
+  var fc = live.enabled && live.formsConfig ? live.formsConfig : null;
+
   var metaJson = escForScript(JSON.stringify({
     slug: meta.slug, quizName: meta.quizName, subject: meta.subject, notes: meta.notes,
-    scrambleOrder: !!scrambleOrder, liveBackend: live.backend, sheetsUrl: live.sheetsUrl, firebaseUrl: live.firebaseUrl
+    scrambleOrder: scrambleOrder,
+    liveBackend: fc ? 'forms' : 'none',
+    formsAction: fc ? fc.actionUrl : '',
+    classCodeEntry: fc ? fc.classCodeEntry : '',
+    studentNameEntry: fc ? fc.studentNameEntry : '',
+    quizNameEntry: fc ? fc.quizNameEntry : '',
+    scoreEntry: fc ? fc.scoreEntry : '',
+    totalEntry: fc ? fc.totalEntry : ''
   }));
   var dataJson = escForScript(JSON.stringify(questions));
 
@@ -216,22 +274,28 @@ function buildQuizHTML(meta, questions, scrambleOrder, live) {
   lines.push('<head>');
   lines.push('<meta charset="UTF-8">');
   lines.push('<meta name="viewport" content="width=device-width, initial-scale=1">');
-  lines.push('<title>' + (meta.quizName || 'Quiz') + '</title>');
+  lines.push('<title>' + escapeHtml(meta.quizName || 'Quiz') + '</title>');
   lines.push('<link rel="stylesheet" href="../styles.css">');
   lines.push('</head>');
   lines.push('<body>');
   lines.push('<div class="wrap">');
-  lines.push('<h1>' + (meta.quizName || 'Quiz') + '</h1>');
-  if (meta.subject) lines.push('<p class="subject">' + meta.subject + '</p>');
-  if (meta.notes) lines.push('<p class="notes">' + meta.notes + '</p>');
-  if (live.backend !== 'none') {
-    lines.push('<div class="card">');
-    lines.push('<div class="two-col">');
-    lines.push('<div><label class="field-label" style="margin-top:0;">Class code</label><input type="text" id="liveClassCode" class="plain-input"></div>');
-    lines.push('<div><label class="field-label" style="margin-top:0;">Name or code</label><input type="text" id="liveStudentCode" class="plain-input"></div>');
-    lines.push('</div>');
-    lines.push('</div>');
+  lines.push('<h1>' + escapeHtml(meta.quizName || 'Quiz') + '</h1>');
+  if (meta.subject) lines.push('<p class="subject">' + escapeHtml(meta.subject) + '</p>');
+  if (meta.notes) lines.push('<p class="notes">' + escapeHtml(meta.notes) + '</p>');
+  if (instructions) lines.push('<div class="card"><p class="notes" style="margin:0;">' + escapeHtml(instructions) + '</p></div>');
+
+  lines.push('<div class="card">');
+  lines.push('<div class="two-col">');
+  lines.push('<div><label class="field-label" style="margin-top:0;">First name</label><input type="text" id="firstNameInput" class="plain-input"></div>');
+  lines.push('<div><label class="field-label" style="margin-top:0;">Last name</label><input type="text" id="lastNameInput" class="plain-input"></div>');
+  lines.push('</div>');
+  if (fc) {
+    lines.push('<label class="field-label" for="liveClassCode">Class code</label>');
+    lines.push('<input type="text" id="liveClassCode" class="plain-input">');
   }
+  lines.push('<p class="hint">Name is optional — shown with the score so results can be screenshotted and submitted.</p>');
+  lines.push('</div>');
+
   lines.push('<div class="card" id="quizCard">');
   lines.push('<form id="quizForm"></form>');
   lines.push('<div class="btn-row"><button class="btn-primary" id="submitBtn">Submit</button></div>');
@@ -248,11 +312,14 @@ function buildQuizHTML(meta, questions, scrambleOrder, live) {
   lines.push('</div>');
   lines.push('<div id="historyWrap" style="margin-top:16px;"></div>');
   lines.push('</div>');
+  lines.push('<p class="hint" style="margin-top:28px;text-align:center;">Version ' + version + ' — generated ' + escapeHtml(generatedAt) + '</p>');
   lines.push('</div>');
+
   lines.push('<script>');
   lines.push('var QUIZ_META = ' + metaJson + ';');
   lines.push('var QUIZ_DATA = ' + dataJson + ';');
   lines.push('var state = { order: [], submitted: false };');
+  lines.push('function bindPersist(id,key){var el=document.getElementById(id);if(!el)return;el.value=localStorage.getItem(key)||"";el.addEventListener("input",function(){localStorage.setItem(key,el.value.trim());});}');
   lines.push('function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}');
   lines.push('function buildOrder(){var idx=QUIZ_DATA.map(function(q,i){return i;});return QUIZ_META.scrambleOrder?shuffle(idx):idx;}');
   lines.push('function render(){state.order=buildOrder();var form=document.getElementById("quizForm");form.innerHTML="";state.order.forEach(function(qi,n){var q=QUIZ_DATA[qi];var block=document.createElement("div");block.className="question";block.dataset.qi=qi;var qt=document.createElement("p");qt.className="qtext";qt.textContent=(n+1)+". "+q.question;block.appendChild(qt);if(q.choices&&q.choices.length){var list=document.createElement("div");list.className="choice-list";var choices=q.scramble?shuffle(q.choices):q.choices.slice();choices.forEach(function(c){var label=document.createElement("label");label.className="choice";var input=document.createElement("input");input.type="radio";input.name="q"+qi;input.value=c;label.appendChild(input);var span=document.createElement("span");span.textContent=c;label.appendChild(span);list.appendChild(label);});block.appendChild(list);}else{var inp=document.createElement("input");inp.type="text";inp.className="text-input";inp.name="q"+qi;inp.placeholder="Type your answer";block.appendChild(inp);}form.appendChild(block);});}');
@@ -263,16 +330,119 @@ function buildQuizHTML(meta, questions, scrambleOrder, live) {
   lines.push('function loadHistory(){try{return JSON.parse(localStorage.getItem(historyKey())||"[]");}catch(e){return [];}}');
   lines.push('function saveAttempt(result){var hist=loadHistory();hist.push({date:new Date().toLocaleString(),score:result.correct,total:result.total});localStorage.setItem(historyKey(),JSON.stringify(hist));return hist;}');
   lines.push('function renderHistory(hist){var wrap=document.getElementById("historyWrap");if(!hist.length){wrap.innerHTML=\'<p class="answer-note">No previous attempts yet.</p>\';return;}var rows=hist.slice().reverse().map(function(h){return "<tr><td>"+h.date+"</td><td>"+h.score+" / "+h.total+"</td></tr>";}).join("");wrap.innerHTML=\'<table class="history"><thead><tr><th>When</th><th>Score</th></tr></thead><tbody>\'+rows+"</tbody></table>";}');
-  lines.push('function sendLiveResult(result){if(QUIZ_META.liveBackend==="none")return;var classEl=document.getElementById("liveClassCode");var studentEl=document.getElementById("liveStudentCode");if(!classEl||!studentEl)return;var classCode=classEl.value.trim();var studentCode=studentEl.value.trim();if(!classCode||!studentCode)return;localStorage.setItem("liveClassCode",classCode);localStorage.setItem("liveStudentCode",studentCode);var payload={classCode:classCode,studentCode:studentCode,quizName:QUIZ_META.quizName,quizSlug:QUIZ_META.slug,score:result.correct,total:result.total,percent:Math.round((result.correct/result.total)*100),timestamp:new Date().toISOString()};try{if(QUIZ_META.liveBackend==="sheets"&&QUIZ_META.sheetsUrl){fetch(QUIZ_META.sheetsUrl,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(payload)});}else if(QUIZ_META.liveBackend==="firebase"&&QUIZ_META.firebaseUrl){var key=studentCode.replace(/[.#$\\[\\]\\/]/g,"_")+"_"+Date.now();fetch(QUIZ_META.firebaseUrl.replace(/\\/$/,"")+"/results/"+encodeURIComponent(classCode)+"/"+key+".json",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});}}catch(e){}}');
-  lines.push('function reveal(result){var hist=saveAttempt(result);sendLiveResult(result);var panel=document.getElementById("resultsPanel");panel.hidden=false;var pct=Math.round((result.correct/result.total)*100);var line=document.getElementById("scoreLine");line.textContent="Score: "+result.correct+" / "+result.total+" ("+pct+"%)";line.className="score-line "+(pct>=70?"pass":"fail");renderHistory(hist);}');
+  lines.push('function sendLiveResult(result){if(QUIZ_META.liveBackend!=="forms"||!QUIZ_META.formsAction)return;var classEl=document.getElementById("liveClassCode");var classCode=classEl?classEl.value.trim():"";if(!classCode)return;var first=(document.getElementById("firstNameInput")||{}).value||"";var last=(document.getElementById("lastNameInput")||{}).value||"";var studentName=(first+" "+last).trim();var body=new URLSearchParams();body.append(QUIZ_META.classCodeEntry,classCode);body.append(QUIZ_META.studentNameEntry,studentName);body.append(QUIZ_META.quizNameEntry,QUIZ_META.quizName);body.append(QUIZ_META.scoreEntry,String(result.correct));body.append(QUIZ_META.totalEntry,String(result.total));try{fetch(QUIZ_META.formsAction,{method:"POST",mode:"no-cors",body:body});}catch(e){}}');
+  lines.push('function reveal(result){var hist=saveAttempt(result);sendLiveResult(result);var panel=document.getElementById("resultsPanel");panel.hidden=false;var pct=Math.round((result.correct/result.total)*100);var first=(document.getElementById("firstNameInput")||{}).value||"";var last=(document.getElementById("lastNameInput")||{}).value||"";var nm=(first+" "+last).trim();var line=document.getElementById("scoreLine");line.textContent=(nm?("Score for "+nm+": "):"Score: ")+result.correct+" / "+result.total+" ("+pct+"%)";line.className="score-line "+(pct>=70?"pass":"fail");renderHistory(hist);}');
   lines.push('document.getElementById("submitBtn").addEventListener("click",function(e){e.preventDefault();if(state.submitted)return;state.submitted=true;document.getElementById("submitBtn").disabled=true;var result=grade();startTimerThenReveal(result);});');
   lines.push('document.getElementById("tryAgainBtn").addEventListener("click",function(){state.submitted=false;document.getElementById("submitBtn").disabled=false;document.getElementById("resultsPanel").hidden=true;render();});');
   lines.push('document.getElementById("clearHistoryBtn").addEventListener("click",function(){if(confirm("Clear all saved history for this quiz? This cannot be undone.")){localStorage.removeItem(historyKey());renderHistory([]);}});');
-  lines.push('var liveClassEl=document.getElementById("liveClassCode"),liveStudentEl=document.getElementById("liveStudentCode");if(liveClassEl){liveClassEl.value=localStorage.getItem("liveClassCode")||"";liveClassEl.addEventListener("input",function(){localStorage.setItem("liveClassCode",liveClassEl.value.trim());});}if(liveStudentEl){liveStudentEl.value=localStorage.getItem("liveStudentCode")||"";liveStudentEl.addEventListener("input",function(){localStorage.setItem("liveStudentCode",liveStudentEl.value.trim());});}');
+  lines.push('bindPersist("firstNameInput","studentFirstName");bindPersist("lastNameInput","studentLastName");bindPersist("liveClassCode","liveClassCode");');
   lines.push('render();renderHistory(loadHistory());');
   lines.push('<' + '/script>');
   lines.push('</body>');
   lines.push('</html>');
+  return lines.join('\n');
+}
+
+function shuffleArr(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function letterFor(i) { return String.fromCharCode(65 + i); }
+
+function buildPrintableHTML(meta, questions, opts) {
+  opts = opts || {};
+  var instructions = opts.instructions || '';
+  var scrambleOrder = !!opts.scrambleOrder;
+  var layout = opts.choiceLayout === 'grid' ? 'grid' : 'column';
+  var cols = Math.max(2, Math.min(6, parseInt(opts.gridColumns, 10) || 4));
+  var includeKey = !!opts.includeAnswerKey;
+  var generatedAt = opts.generatedAt || new Date().toLocaleString();
+
+  var qList = questions.map(function(q) {
+    var choices = q.choices && q.choices.length ? (q.scramble ? shuffleArr(q.choices) : q.choices.slice()) : [];
+    return { question: q.question, answer: q.answer, choices: choices };
+  });
+  if (scrambleOrder) qList = shuffleArr(qList);
+
+  var css = [
+    '*{box-sizing:border-box;}',
+    'body{font-family:Georgia,\'Times New Roman\',serif;color:#1a1a1a;margin:0;padding:0.6in;line-height:1.4;}',
+    '.print-bar{display:flex;justify-content:flex-end;margin-bottom:16px;}',
+    '.print-bar button{font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-weight:600;font-size:0.9rem;padding:10px 18px;border:none;border-radius:8px;background:#2f5233;color:#fff;cursor:pointer;}',
+    '.header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #1a1a1a;padding-bottom:10px;margin-bottom:6px;}',
+    '.header h1{font-size:1.5rem;margin:0;}',
+    '.subject{font-size:0.9rem;color:#2f5233;font-weight:bold;margin:2px 0 0;}',
+    '.fill-row{display:flex;gap:28px;font-size:0.92rem;margin:14px 0 18px;}',
+    '.fill-row .line{border-bottom:1px solid #999;display:inline-block;min-width:180px;margin-left:6px;}',
+    '.instructions-box{border:1px solid #999;background:#f7f7f2;padding:10px 14px;margin-bottom:18px;font-size:0.92rem;}',
+    '.question{margin-bottom:16px;page-break-inside:avoid;}',
+    '.qnum{font-weight:bold;margin-right:4px;}',
+    '.choices-col{margin:6px 0 0 22px;}',
+    '.choices-col .choice{margin-bottom:4px;}',
+    '.choices-grid{display:grid;grid-template-columns:repeat(' + cols + ',1fr);gap:5px 16px;margin:6px 0 0 22px;}',
+    '.blank-line{border-bottom:1px solid #999;display:inline-block;min-width:240px;margin-left:8px;}',
+    '.answer-key{page-break-before:always;margin-top:10px;}',
+    '.answer-key h2{font-size:1.2rem;border-bottom:1px solid #1a1a1a;padding-bottom:6px;}',
+    '.key-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px 24px;font-size:0.92rem;margin-top:12px;}',
+    '.footer-note{margin-top:26px;font-size:0.75rem;color:#777;}',
+    '@media print{.no-print{display:none !important;}body{padding:0.5in;}@page{margin:0.5in;}}'
+  ].join('\n');
+
+  var lines = [];
+  lines.push('<!DOCTYPE html>', '<html lang="en">', '<head>', '<meta charset="UTF-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">');
+  lines.push('<title>' + escapeHtml(meta.quizName || 'Quiz') + ' (Printable)</title>');
+  lines.push('<style>' + css + '</style>');
+  lines.push('</head>', '<body>');
+  lines.push('<div class="print-bar no-print"><button onclick="window.print()">Print / Save as PDF</button></div>');
+  lines.push('<div class="header"><div><h1>' + escapeHtml(meta.quizName || 'Quiz') + '</h1>' + (meta.subject ? '<p class="subject">' + escapeHtml(meta.subject) + '</p>' : '') + '</div></div>');
+  lines.push('<div class="fill-row"><div>Name:<span class="line"></span></div><div>Date:<span class="line"></span></div></div>');
+  if (instructions) lines.push('<div class="instructions-box">' + escapeHtml(instructions) + '</div>');
+
+  qList.forEach(function(q, i) {
+    lines.push('<div class="question">');
+    lines.push('<span class="qnum">' + (i + 1) + '.</span>' + escapeHtml(q.question));
+    if (q.choices.length) {
+      if (layout === 'grid') {
+        lines.push('<div class="choices-grid">');
+        q.choices.forEach(function(c, ci) { lines.push('<div>' + letterFor(ci) + ') ' + escapeHtml(c) + '</div>'); });
+        lines.push('</div>');
+      } else {
+        lines.push('<div class="choices-col">');
+        q.choices.forEach(function(c, ci) { lines.push('<div class="choice">' + letterFor(ci) + ') ' + escapeHtml(c) + '</div>'); });
+        lines.push('</div>');
+      }
+    } else {
+      lines.push('<div style="margin-top:8px;">Answer:<span class="blank-line"></span></div>');
+    }
+    lines.push('</div>');
+  });
+
+  if (includeKey) {
+    lines.push('<div class="answer-key">');
+    lines.push('<h2>Answer Key</h2>');
+    lines.push('<div class="key-grid">');
+    qList.forEach(function(q, i) {
+      var letter = '';
+      if (q.choices.length) {
+        var idx = -1;
+        for (var k = 0; k < q.choices.length; k++) {
+          if (q.choices[k].trim().toLowerCase() === q.answer.trim().toLowerCase()) { idx = k; break; }
+        }
+        letter = idx !== -1 ? (letterFor(idx) + ') ') : '';
+      }
+      lines.push('<div>' + (i + 1) + '. ' + letter + escapeHtml(q.answer) + '</div>');
+    });
+    lines.push('</div>');
+    lines.push('</div>');
+  }
+
+  lines.push('<p class="footer-note no-print">Generated ' + escapeHtml(generatedAt) + '. Use Print (Ctrl/Cmd+P) and choose &ldquo;Save as PDF&rdquo; as the destination.</p>');
+  lines.push('</body>', '</html>');
   return lines.join('\n');
 }
 
@@ -283,6 +453,9 @@ function buildDebugHTML(html, mode) {
     '<script>',
     'window.__QUIZ_DEBUG_SECONDS__ = 2;',
     'window.addEventListener("load", function() {',
+    '  var ce = document.getElementById("liveClassCode"); if (ce) ce.value = "DEBUG";',
+    '  var fe = document.getElementById("firstNameInput"); if (fe) fe.value = "Preview";',
+    '  var le = document.getElementById("lastNameInput"); if (le) le.value = "' + (mode === 'perfect' ? 'Perfect' : 'Random') + '";',
     '  document.querySelectorAll(".question").forEach(function(block) {',
     '    var qi = block.dataset.qi;',
     '    var q = QUIZ_DATA[qi];',
@@ -304,57 +477,112 @@ function buildDebugHTML(html, mode) {
   return html.replace('</body>', debugScript + '\n</body>');
 }
 
-var APPS_SCRIPT_CODE = [
-  'function doPost(e) {',
-  '  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();',
-  '  if (sheet.getLastRow() === 0) {',
-  '    sheet.appendRow([\'Timestamp\', \'Class Code\', \'Student Code\', \'Quiz Name\', \'Quiz Slug\', \'Score\', \'Total\', \'Percent\']);',
-  '  }',
-  '  var data = JSON.parse(e.postData.contents);',
-  '  sheet.appendRow([new Date(), data.classCode || \'\', data.studentCode || \'\', data.quizName || \'\', data.quizSlug || \'\', data.score, data.total, data.percent]);',
-  '  return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);',
-  '}'
-].join('\n');
-
-var FIREBASE_RULES = [
-  '{',
-  '  "rules": {',
-  '    "results": {',
-  '      ".read": true,',
-  '      ".write": true',
-  '    }',
-  '  }',
-  '}'
-].join('\n');
-
-var lastResult = null; // { html, path, link, filename }
-
-function loadCatalog() {
-  try { return JSON.parse(localStorage.getItem('quizGenCatalog') || '[]'); } catch (e) { return []; }
+// --- saved quizzes / version tracking (one record per folder+name path) ---
+function loadSaved() {
+  try { return JSON.parse(localStorage.getItem('quizGenSaved') || '{}'); } catch (e) { return {}; }
+}
+function saveSaved(all) {
+  localStorage.setItem('quizGenSaved', JSON.stringify(all));
 }
 
 function renderCatalog() {
-  var cat = loadCatalog();
+  var all = loadSaved();
+  var list = Object.keys(all).map(function(p) { return all[p]; });
   var card = document.getElementById('catalogCard');
-  if (!cat.length) { card.hidden = true; return; }
+  if (!list.length) { card.hidden = true; return; }
   card.hidden = false;
-  var rows = cat.slice().reverse().slice(0, 15).map(function(c) {
-    return '<tr><td>' + c.date + '</td><td>' + c.name + '</td><td><code>' + c.path + '</code></td></tr>';
+  list.sort(function(a, b) { return (b.updatedAtTs || 0) - (a.updatedAtTs || 0); });
+  var rows = list.slice(0, 25).map(function(r) {
+    var actions = '';
+    if (r.link) {
+      actions += '<button class="btn-quiet copy-link-btn" data-link="' + escapeHtml(r.link) + '" type="button">Copy link</button>';
+      actions += '<a href="' + escapeHtml(r.link) + '" target="_blank" rel="noopener" class="btn-quiet">Open</a>';
+    }
+    actions += '<button class="btn-quiet load-edit-btn" data-path="' + escapeHtml(r.path) + '" type="button">Load to edit</button>';
+    return '<tr><td>' + r.updatedAt + '</td><td>' + escapeHtml(r.folder) + ' / ' + escapeHtml(r.name) + '<br><code>' + r.path + '</code></td><td>v' + r.version + '</td><td><div class="btn-row" style="margin-top:0;">' + actions + '</div></td></tr>';
   }).join('');
   document.getElementById('catalogWrap').innerHTML =
-    '<table class="history"><thead><tr><th>When</th><th>Quiz</th><th>Path</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    '<table class="history"><thead><tr><th>When</th><th>Quiz</th><th>Ver</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  document.querySelectorAll('.copy-link-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() { copyText(btn.getAttribute('data-link'), document.getElementById('statusMsg')); });
+  });
+  document.querySelectorAll('.load-edit-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() { loadForEdit(btn.getAttribute('data-path')); });
+  });
 }
 
-function addToCatalog(entry) {
-  var cat = loadCatalog();
-  cat.push(entry);
-  localStorage.setItem('quizGenCatalog', JSON.stringify(cat));
-  renderCatalog();
+function loadForEdit(path) {
+  var all = loadSaved();
+  var r = all[path];
+  if (!r) return;
+  document.getElementById('csvInput').value = r.raw;
+  document.querySelector('input[name="mode"][value="' + r.mode + '"]').checked = true;
+  document.getElementById('folderInput').value = r.folder;
+  document.getElementById('nameInput').value = r.name;
+  document.getElementById('instructionsInput').value = r.instructions || '';
+  document.getElementById('scrambleOrderInput').checked = !!r.scramble;
+  document.getElementById('liveEnabledInput').checked = !!r.liveEnabled;
+  toggleLiveSettings();
+  var statusEl = document.getElementById('statusMsg');
+  statusEl.textContent = 'Loaded "' + r.name + '" (version ' + r.version + ') for editing. Generating again saves it as version ' + (r.version + 1) + '.';
+  statusEl.className = 'status-msg ok';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Remember the base URL on this device.
+var lastResult = null; // { html, path, link, filename, version }
+
+function copyText(text, statusEl) {
+  navigator.clipboard.writeText(text).then(function() {
+    statusEl.textContent = 'Copied.';
+    statusEl.className = 'status-msg ok';
+  });
+}
+
+// Remember site/repo links and Forms config on this device.
 var savedBaseUrl = localStorage.getItem('quizGenBaseUrl');
 if (savedBaseUrl) document.getElementById('baseUrlInput').value = savedBaseUrl;
+var savedRepoUrl = localStorage.getItem('quizGenRepoUrl');
+if (savedRepoUrl) document.getElementById('repoUrlInput').value = savedRepoUrl;
+document.getElementById('baseUrlInput').addEventListener('change', function() { localStorage.setItem('quizGenBaseUrl', this.value.trim()); });
+document.getElementById('repoUrlInput').addEventListener('change', function() { localStorage.setItem('quizGenRepoUrl', this.value.trim()); });
+
+document.getElementById('copySiteBtn').addEventListener('click', function() {
+  copyText(document.getElementById('baseUrlInput').value.trim(), document.getElementById('statusMsg'));
+});
+document.getElementById('copyRepoBtn').addEventListener('click', function() {
+  copyText(document.getElementById('repoUrlInput').value.trim(), document.getElementById('statusMsg'));
+});
+
+var liveEnabledInput = document.getElementById('liveEnabledInput');
+var formsSettings = document.getElementById('formsSettings');
+function toggleLiveSettings() { formsSettings.hidden = !liveEnabledInput.checked; }
+liveEnabledInput.addEventListener('change', toggleLiveSettings);
+
+var savedFormsConfig = null;
+try { savedFormsConfig = JSON.parse(localStorage.getItem('quizGenFormsConfig') || 'null'); } catch (e) {}
+var savedFormsPrefill = localStorage.getItem('quizGenFormsPrefill');
+if (savedFormsPrefill) document.getElementById('formsPrefillInput').value = savedFormsPrefill;
+if (savedFormsConfig) {
+  var fs0 = document.getElementById('formsStatus');
+  fs0.textContent = 'Using a previously parsed form.';
+  fs0.className = 'status-msg ok';
+}
+
+document.getElementById('parseFormsBtn').addEventListener('click', function() {
+  var statusEl = document.getElementById('formsStatus');
+  try {
+    var url = document.getElementById('formsPrefillInput').value.trim();
+    var cfg = parsePrefillUrl(url);
+    savedFormsConfig = cfg;
+    localStorage.setItem('quizGenFormsConfig', JSON.stringify(cfg));
+    localStorage.setItem('quizGenFormsPrefill', url);
+    statusEl.textContent = 'Parsed — all five fields found. Ready to use.';
+    statusEl.className = 'status-msg ok';
+  } catch (err) {
+    statusEl.textContent = err.message;
+    statusEl.className = 'status-msg error';
+  }
+});
 
 document.getElementById('generateBtn').addEventListener('click', function() {
   var statusEl = document.getElementById('statusMsg');
@@ -370,28 +598,56 @@ document.getElementById('generateBtn').addEventListener('click', function() {
     if (!folderRaw) throw new Error('Enter a subject folder (e.g. "Trial Quizzes").');
     if (!nameRaw) throw new Error('Enter a quiz name, or include one in a full-format sheet.');
 
+    var instructionsRaw = document.getElementById('instructionsInput').value.trim();
+
+    var liveEnabled = liveEnabledInput.checked;
+    if (liveEnabled && !savedFormsConfig) throw new Error('Parse the Google Form pre-filled link before generating with live results enabled.');
+
     var folderSlug = slugify(folderRaw);
     var nameSlug = slugify(nameRaw);
     var path = folderSlug + '/' + nameSlug + '.html';
 
     var baseUrl = document.getElementById('baseUrlInput').value.trim().replace(/\/+$/, '');
-    if (baseUrl) localStorage.setItem('quizGenBaseUrl', baseUrl);
     var link = baseUrl ? (baseUrl + '/' + path) : '';
 
     var scrambleOrder = document.getElementById('scrambleOrderInput').checked;
-    var meta = { slug: folderSlug + '-' + nameSlug, quizName: nameRaw, subject: parsed.meta.subject, notes: parsed.meta.notes };
-    var html = buildQuizHTML(meta, parsed.questions, scrambleOrder);
 
-    lastResult = { html: html, path: path, link: link, filename: nameSlug + '.html' };
+    var all = loadSaved();
+    var existing = all[path];
+    var version = existing ? existing.version + 1 : 1;
+    var generatedAt = new Date().toLocaleString();
+
+    var meta = { slug: folderSlug + '-' + nameSlug, quizName: nameRaw, subject: parsed.meta.subject, notes: parsed.meta.notes };
+    var live = { enabled: liveEnabled, formsConfig: liveEnabled ? savedFormsConfig : null };
+    var html = buildQuizHTML(meta, parsed.questions, {
+      scrambleOrder: scrambleOrder, instructions: instructionsRaw, live: live, version: version, generatedAt: generatedAt
+    });
+
+    lastResult = {
+      html: html, path: path, link: link, filename: nameSlug + '.html', version: version,
+      meta: meta, questions: parsed.questions, instructions: instructionsRaw, scrambleOrder: scrambleOrder
+    };
+    document.getElementById('printableCard').hidden = false;
 
     document.getElementById('codeOut').value = html;
     document.getElementById('pathOut').value = path;
-    document.getElementById('linkOut').value = link || '(enter your GitHub Pages address above to build a link)';
+    document.getElementById('linkOut').value = link || '(enter a GitHub Pages address above to build a link)';
+    document.getElementById('versionOut').textContent = 'version ' + version;
+    document.getElementById('versionHint').textContent = version > 1
+      ? ('This path already exists (previous version ' + (version - 1) + '). On GitHub, edit that file (pencil icon) rather than creating a new one.')
+      : 'This is a new path — use "Create new file" on GitHub and paste the path below as the filename.';
     document.getElementById('outputCard').hidden = false;
     statusEl.textContent = 'Generated ' + parsed.questions.length + ' question(s).';
     statusEl.classList.add('ok');
 
-    addToCatalog({ date: new Date().toLocaleString(), name: nameRaw, path: path, link: link });
+    all[path] = {
+      version: version, updatedAt: generatedAt, updatedAtTs: Date.now(),
+      path: path, link: link, name: nameRaw, folder: folderRaw,
+      raw: raw, mode: mode, instructions: instructionsRaw,
+      scramble: scrambleOrder, liveEnabled: liveEnabled
+    };
+    saveSaved(all);
+    renderCatalog();
   } catch (err) {
     statusEl.textContent = err.message;
     statusEl.classList.add('error');
@@ -399,23 +655,14 @@ document.getElementById('generateBtn').addEventListener('click', function() {
   }
 });
 
-function copyText(text, statusEl) {
-  navigator.clipboard.writeText(text).then(function() {
-    statusEl.textContent = 'Copied.';
-    statusEl.className = 'status-msg ok';
-  });
-}
-
 document.getElementById('copyPathBtn').addEventListener('click', function() {
   if (!lastResult) return;
   copyText(lastResult.path, document.getElementById('statusMsg'));
 });
-
 document.getElementById('copyLinkBtn').addEventListener('click', function() {
   if (!lastResult || !lastResult.link) return;
   copyText(lastResult.link, document.getElementById('statusMsg'));
 });
-
 document.getElementById('downloadBtn').addEventListener('click', function() {
   if (!lastResult) return;
   var blob = new Blob([lastResult.html], { type: 'text/html' });
@@ -428,7 +675,6 @@ document.getElementById('downloadBtn').addEventListener('click', function() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 });
-
 document.getElementById('copyBtn').addEventListener('click', function() {
   if (!lastResult) return;
   copyText(lastResult.html, document.getElementById('statusMsg'));
@@ -439,20 +685,50 @@ function openBlob(html) {
   var url = URL.createObjectURL(blob);
   window.open(url, '_blank');
 }
-
 document.getElementById('previewBtn').addEventListener('click', function() {
   if (!lastResult) return;
   openBlob(lastResult.html);
 });
-
 document.getElementById('previewPerfectBtn').addEventListener('click', function() {
   if (!lastResult) return;
   openBlob(buildDebugHTML(lastResult.html, 'perfect'));
 });
-
 document.getElementById('previewRandomBtn').addEventListener('click', function() {
   if (!lastResult) return;
   openBlob(buildDebugHTML(lastResult.html, 'random'));
+});
+
+var choiceLayoutSelect = document.getElementById('choiceLayoutSelect');
+var gridColsRow = document.getElementById('gridColsRow');
+var gridColsInput = document.getElementById('gridColsInput');
+var includeKeyInput = document.getElementById('includeKeyInput');
+
+var savedLayout = localStorage.getItem('quizGenChoiceLayout');
+if (savedLayout) choiceLayoutSelect.value = savedLayout;
+var savedCols = localStorage.getItem('quizGenGridCols');
+if (savedCols) gridColsInput.value = savedCols;
+var savedKey = localStorage.getItem('quizGenIncludeKey');
+if (savedKey) includeKeyInput.checked = savedKey === 'true';
+gridColsRow.hidden = choiceLayoutSelect.value !== 'grid';
+
+choiceLayoutSelect.addEventListener('change', function() {
+  gridColsRow.hidden = choiceLayoutSelect.value !== 'grid';
+  localStorage.setItem('quizGenChoiceLayout', choiceLayoutSelect.value);
+});
+gridColsInput.addEventListener('change', function() { localStorage.setItem('quizGenGridCols', gridColsInput.value); });
+includeKeyInput.addEventListener('change', function() { localStorage.setItem('quizGenIncludeKey', includeKeyInput.checked); });
+
+document.getElementById('printableBtn').addEventListener('click', function() {
+  var statusEl = document.getElementById('statusMsg');
+  if (!lastResult || !lastResult.meta) { statusEl.textContent = 'Generate a quiz first.'; statusEl.className = 'status-msg error'; return; }
+  var html = buildPrintableHTML(lastResult.meta, lastResult.questions, {
+    instructions: lastResult.instructions,
+    scrambleOrder: lastResult.scrambleOrder,
+    choiceLayout: choiceLayoutSelect.value,
+    gridColumns: gridColsInput.value,
+    includeAnswerKey: includeKeyInput.checked
+  });
+  openBlob(html);
 });
 
 renderCatalog();
