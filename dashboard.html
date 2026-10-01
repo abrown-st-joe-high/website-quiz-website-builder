@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live Results Dashboard</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Live Results Dashboard</h1>
+  <p class="notes">Reads the Google Sheet linked to the results Form and shows submissions for one class code at a time.</p>
+
+  <div class="card">
+    <label class="field-label" style="margin-top:0;" for="csvUrlInput">Published Sheet CSV link</label>
+    <input type="text" id="csvUrlInput" class="plain-input" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv">
+    <p class="hint">In the results Sheet: File &rarr; Share &rarr; Publish to web &rarr; select the response sheet &rarr; CSV &rarr; copy the link here.</p>
+
+    <label class="field-label" for="classCodeInput">Class code</label>
+    <input type="text" id="classCodeInput" class="plain-input" placeholder="e.g. PERIOD2">
+
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn-primary" id="connectBtn" type="button">Show results</button>
+      <button class="btn-secondary" id="refreshBtn" type="button" hidden>Refresh now</button>
+    </div>
+    <p id="statusMsg" class="status-msg"></p>
+  </div>
+
+  <div class="card" id="resultsCard" hidden>
+    <div class="stat-row">
+      <div class="stat"><div class="num" id="statCount">0</div><div class="lbl">Submissions</div></div>
+      <div class="stat"><div class="num" id="statAvg">0%</div><div class="lbl">Average score</div></div>
+      <div class="stat"><div class="num" id="statUpdated">—</div><div class="lbl">Last updated</div></div>
+    </div>
+    <div id="tableWrap"></div>
+  </div>
+
+</div>
+
+<script>
+function escapeHtml(s) {
+  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// Minimal RFC-4180-ish CSV parser: handles quoted fields, embedded commas, and doubled quotes.
+function parseCSV(text) {
+  var rows = [];
+  var row = [];
+  var field = '';
+  var inQuotes = false;
+  for (var i = 0; i < text.length; i++) {
+    var c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else { inQuotes = false; }
+      } else {
+        field += c;
+      }
+    } else {
+      if (c === '"') { inQuotes = true; }
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\r') { /* skip */ }
+      else if (c === '\n') { row.push(field); field = ''; rows.push(row); row = []; }
+      else { field += c; }
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(function(r) { return r.some(function(c) { return c.trim() !== ''; }); });
+}
+
+function findCol(header, names) {
+  var lower = header.map(function(h) { return (h || '').trim().toLowerCase(); });
+  for (var i = 0; i < names.length; i++) {
+    var idx = lower.indexOf(names[i]);
+    if (idx !== -1) return idx;
+  }
+  return -1;
+}
+
+function rowsToResults(rows, classCode) {
+  if (!rows.length) return [];
+  var header = rows[0];
+  var iTime = findCol(header, ['timestamp']);
+  var iClass = findCol(header, ['class code']);
+  var iName = findCol(header, ['student name']);
+  var iQuiz = findCol(header, ['quiz name']);
+  var iScore = findCol(header, ['score']);
+  var iTotal = findCol(header, ['total']);
+  var wanted = classCode.trim().toLowerCase();
+  return rows.slice(1).filter(function(r) {
+    return iClass !== -1 && (r[iClass] || '').trim().toLowerCase() === wanted;
+  }).map(function(r) {
+    var score = parseFloat(r[iScore]) || 0;
+    var total = parseFloat(r[iTotal]) || 0;
+    return {
+      time: iTime !== -1 ? r[iTime] : '',
+      name: iName !== -1 ? r[iName] : '',
+      quiz: iQuiz !== -1 ? r[iQuiz] : '',
+      score: score,
+      total: total,
+      pct: total ? Math.round((score / total) * 100) : 0
+    };
+  });
+}
+
+function render(results) {
+  document.getElementById('resultsCard').hidden = false;
+  document.getElementById('statCount').textContent = results.length;
+  var avg = results.length ? Math.round(results.reduce(function(s, r) { return s + r.pct; }, 0) / results.length) : 0;
+  document.getElementById('statAvg').textContent = avg + '%';
+  document.getElementById('statUpdated').textContent = new Date().toLocaleTimeString();
+
+  var sorted = results.slice().sort(function(a, b) { return (b.time || '').localeCompare(a.time || ''); });
+  var rows = sorted.map(function(r) {
+    return '<tr><td>' + escapeHtml(r.time) + '</td><td>' + escapeHtml(r.name) + '</td><td>' + escapeHtml(r.quiz) + '</td><td>' + r.score + ' / ' + r.total + '</td><td>' + r.pct + '%</td></tr>';
+  }).join('');
+  document.getElementById('tableWrap').innerHTML = rows
+    ? '<table class="history"><thead><tr><th>Time</th><th>Name</th><th>Quiz</th><th>Score</th><th>%</th></tr></thead><tbody>' + rows + '</tbody></table>'
+    : '<p class="answer-note">No submissions yet for this class code.</p>';
+}
+
+var pollTimer = null;
+
+function loadOnce() {
+  var statusEl = document.getElementById('statusMsg');
+  var csvUrl = document.getElementById('csvUrlInput').value.trim();
+  var classCode = document.getElementById('classCodeInput').value.trim();
+  if (!csvUrl || !classCode) return;
+  fetch(csvUrl, { cache: 'no-store' })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Could not load the CSV (' + r.status + ').');
+      return r.text();
+    })
+    .then(function(text) {
+      var rows = parseCSV(text);
+      var results = rowsToResults(rows, classCode);
+      render(results);
+      statusEl.textContent = '';
+      statusEl.className = 'status-msg';
+    })
+    .catch(function(err) {
+      statusEl.textContent = err.message;
+      statusEl.className = 'status-msg error';
+    });
+}
+
+document.getElementById('connectBtn').addEventListener('click', function() {
+  var csvUrl = document.getElementById('csvUrlInput').value.trim();
+  var classCode = document.getElementById('classCodeInput').value.trim();
+  if (!csvUrl) { document.getElementById('statusMsg').textContent = 'Paste the published CSV link first.'; document.getElementById('statusMsg').className = 'status-msg error'; return; }
+  if (!classCode) { document.getElementById('statusMsg').textContent = 'Enter a class code first.'; document.getElementById('statusMsg').className = 'status-msg error'; return; }
+  localStorage.setItem('dashCsvUrl', csvUrl);
+  localStorage.setItem('dashClassCode', classCode);
+  document.getElementById('refreshBtn').hidden = false;
+  loadOnce();
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(loadOnce, 5000);
+});
+
+document.getElementById('refreshBtn').addEventListener('click', loadOnce);
+
+var savedCsvUrl = localStorage.getItem('dashCsvUrl');
+var savedClassCode = localStorage.getItem('dashClassCode');
+if (savedCsvUrl) document.getElementById('csvUrlInput').value = savedCsvUrl;
+if (savedClassCode) document.getElementById('classCodeInput').value = savedClassCode;
+</script>
+</body>
+</html>
